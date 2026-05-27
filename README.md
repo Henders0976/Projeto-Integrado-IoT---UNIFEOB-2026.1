@@ -1,5 +1,15 @@
 # 💡 Controle de Luz — Arduino + Interface Web
 
+-- DESENVOLVIDO PELOS ESTUDANTES: 
+
+Henderson Lério Grossi - RA: 26000986
+
+Pietro Emanuel da Silva Batista - RA: 26000307
+
+Kauê Valério Baesso - RA: 26001167
+
+Washington Luiz da Silva - RA: 26001289
+
 Sistema de controle de iluminação para sala de aula desenvolvido com Arduino UNO e interface web em React. Permite ligar e desligar lâmpadas remotamente pelo computador ou celular via cabo USB, sem necessidade de internet.
 
 ---
