@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Controle de Luz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --white: #fdfaf6;
+    --gray-50: #f7f3ee;
+    --gray-100: #ede8e0;
+    --gray-200: #ddd6cb;
+    --gray-300: #c4b9aa;
+    --gray-400: #a0917f;
+    --gray-500: #7d6e5c;
+    --gray-600: #5c4f40;
+    --gray-700: #3d3328;
+    --gray-800: #2a2118;
+    --gray-900: #1a1410;
+    --blue-500: #7c6af7;
+    --blue-600: #6554e8;
+    --blue-700: #5243cc;
+    --red-500: #e05c5c;
+    --red-600: #c94444;
+    --yellow-50: #fdf6e3;
+    --yellow-200: #f5dfa0;
+    --yellow-400: #e8c14a;
+    --yellow-500: #d4a820;
+    --yellow-600: #a87d0f;
+    --yellow-900: #5c3f00;
+    --green-500: #3db87a;
+    --green-600: #2a9a60;
+    --accent: #e8895a;
+    --accent-light: #fdf0e8;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #e8e0d5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.dark { background: var(--gray-900); }
+
+  .phone {
+    width: 430px;
+    min-height: 932px;
+    background: var(--white);
+    box-shadow: 0 25px 60px rgba(80,50,20,.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  body.dark .phone { background: var(--gray-800); color: var(--white); }
+
+  /* HEADER */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--white);
+    position: sticky; top: 0; z-index: 10; flex-shrink: 0;
+  }
+  body.dark .header { background: var(--gray-800); border-color: var(--gray-700); }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header-icons { display: flex; align-items: center; gap: 16px; }
+  .icon-btn {
+    background: none; border: none; cursor: pointer; padding: 4px;
+    color: inherit; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; transition: background .15s;
+  }
+  .icon-btn:hover { background: var(--gray-100); }
+  body.dark .icon-btn:hover { background: var(--gray-700); }
+
+  /* CONTENT */
+  .content { padding: 0 24px 32px; flex: 1; overflow-y: auto; }
+  .time-bar { padding: 20px 0 4px; font-size: 17px; color: var(--gray-500); }
+  body.dark .time-bar { color: var(--gray-400); }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; margin-top: 20px;
+  }
+  .section-header h2 { font-size: 18px; font-weight: 600; }
+
+  /* TOGGLE */
+  .toggle {
+    position: relative; width: 52px; height: 30px;
+    background: var(--gray-300); border: none;
+    border-radius: 100px; cursor: pointer;
+    transition: background .2s; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle.blue.on { background: var(--blue-600); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 24px; height: 24px; background: var(--white);
+    border-radius: 50%; transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .toggle.on::after { transform: translateX(22px); }
+
+  /* RELAY — coluna única, cards maiores */
+  .relay-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .relay-card {
+    border-radius: 20px; padding: 22px 24px;
+    border: 1px solid var(--gray-200); background: var(--white);
+    cursor: pointer; transition: all .2s;
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  body.dark .relay-card { background: var(--gray-700); border-color: var(--gray-600); }
+  .relay-card:hover { background: var(--gray-50); }
+  body.dark .relay-card:hover { background: var(--gray-600); }
+  .relay-card.on { background: var(--yellow-50); border-color: var(--yellow-200); }
+  body.dark .relay-card.on { background: rgba(113,63,18,.3); border-color: rgba(202,138,4,.4); }
+  .relay-card-top { display: flex; align-items: center; gap: 16px; }
+  .relay-card-icon {
+    width: 46px; height: 46px; border-radius: 14px;
+    background: var(--gray-100); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  body.dark .relay-card-icon { background: var(--gray-600); }
+  .relay-card.on .relay-card-icon { background: var(--yellow-200); color: var(--yellow-900); }
+  body.dark .relay-card.on .relay-card-icon { background: rgba(202,138,4,.3); color: var(--yellow-400); }
+  /* toggle tamanho normal nos cards */
+  .relay-card .toggle { width: 52px; height: 30px; flex-shrink: 0; }
+  .relay-card .toggle::after { width: 24px; height: 24px; }
+  .relay-card .toggle.on::after { transform: translateX(22px); }
+  .relay-name { font-size: 17px; font-weight: 600; line-height: 1.3; }
+  .relay-status { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
+  .relay-card.on .relay-status { color: var(--yellow-600); }
+  body.dark .relay-card.on .relay-status { color: var(--yellow-400); }
+
+  .relay-all-btns { display: flex; gap: 10px; margin-top: 0; }
+  .relay-all-btn {
+    flex: 1; padding: 16px 0; border-radius: 16px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: all .2s; border: none; font-family: inherit;
+  }
+  .relay-all-btn.ligar { background: var(--gray-800); color: var(--white); }
+  .relay-all-btn.ligar:hover { background: var(--gray-700); }
+  .relay-all-btn.ligar:disabled { background: var(--gray-200); color: var(--gray-400); cursor: default; }
+  body.dark .relay-all-btn.ligar { background: var(--blue-600); color: var(--white); }
+  body.dark .relay-all-btn.ligar:hover { background: var(--blue-700); }
+  body.dark .relay-all-btn.ligar:disabled { background: var(--gray-700); color: var(--gray-500); cursor: default; }
+  .relay-all-btn.desligar { background: var(--red-600); color: var(--white); }
+  .relay-all-btn.desligar:hover { background: var(--red-500); }
+  .relay-all-btn.desligar:disabled { background: var(--gray-200); color: var(--gray-400); cursor: default; }
+  body.dark .relay-all-btn.desligar:disabled { background: var(--gray-700); color: var(--gray-500); cursor: default; }
+
+  /* DEVICE LIST */
+  .device-list { display: flex; flex-direction: column; gap: 10px; }
+  .device-card {
+    border-radius: 18px; padding: 20px 22px;
+    border: 1px solid var(--gray-200); background: var(--white);
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: background .15s;
+  }
+  body.dark .device-card { background: var(--gray-700); border-color: var(--gray-600); }
+  .device-card:hover { background: var(--gray-50); }
+  body.dark .device-card:hover { background: var(--gray-600); }
+  .device-card-left { display: flex; align-items: center; gap: 16px; }
+  .device-icon-wrap { padding: 10px; border-radius: 12px; }
+  .device-name { font-size: 17px; font-weight: 600; }
+  .device-location { font-size: 14px; color: var(--gray-500); margin-top: 2px; }
+  body.dark .device-location { color: var(--gray-400); }
+
+  /* ADD BTN */
+  .add-btn {
+    width: 100%; margin-top: 20px; padding: 18px; border-radius: 18px;
+    background: var(--gray-800); color: var(--white);
+    font-size: 17px; font-weight: 600; font-family: inherit;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .15s;
+  }
+  .add-btn:hover { background: var(--gray-700); }
+  body.dark .add-btn { background: var(--blue-600); }
+  body.dark .add-btn:hover { background: var(--blue-700); }
+
+  /* BACK HEADER */
+  .back-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--gray-200);
+    background: var(--white); flex-shrink: 0;
+  }
+  body.dark .back-header { background: var(--gray-800); border-color: var(--gray-700); }
+  .back-header span { font-size: 17px; color: var(--gray-500); }
+  body.dark .back-header span { color: var(--gray-400); }
+
+  /* DETAIL */
+  .detail-hero { display: flex; flex-direction: column; align-items: center; padding: 36px 24px 24px; }
+  .detail-icon-box {
+    width: 112px; height: 112px; border-radius: 28px;
+    background: var(--gray-100);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px; transition: background .3s;
+  }
+  body.dark .detail-icon-box { background: var(--gray-700); }
+  .detail-icon-box.on-relay { background: var(--yellow-50); }
+  body.dark .detail-icon-box.on-relay { background: rgba(113,63,18,.3); }
+  .detail-title { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .detail-sub { font-size: 15px; color: var(--gray-500); }
+  body.dark .detail-sub { color: var(--gray-400); }
+
+  .card-row {
+    border-radius: 18px; padding: 20px 22px;
+    border: 1px solid var(--gray-200); background: var(--white);
+    margin: 0 24px 10px;
+  }
+  body.dark .card-row { background: var(--gray-700); border-color: var(--gray-600); }
+  .card-row-flex { display: flex; align-items: center; justify-content: space-between; }
+  .card-row-label { font-size: 13px; color: var(--gray-500); margin-bottom: 6px; }
+  body.dark .card-row-label { color: var(--gray-400); }
+  .card-row-value { font-size: 18px; font-weight: 600; }
+  .card-row-value.on { color: var(--yellow-600); }
+  body.dark .card-row-value.on { color: var(--yellow-400); }
+  .relay-info-text { font-size: 13px; color: var(--gray-500); margin-top: 8px; line-height: 1.5; }
+  body.dark .relay-info-text { color: var(--gray-400); }
+
+  /* RANGE */
+  .range-wrap { padding: 20px 22px; border-radius: 18px; border: 1px solid var(--gray-200); background: var(--white); margin: 0 24px 10px; }
+  body.dark .range-wrap { background: var(--gray-700); border-color: var(--gray-600); }
+  .range-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .range-label { font-size: 15px; font-weight: 500; }
+  .range-val { font-size: 17px; font-weight: 600; }
+  input[type=range] {
+    width: 100%; height: 6px; border-radius: 4px;
+    -webkit-appearance: none; appearance: none;
+    background: var(--gray-200); outline: none; cursor: pointer;
+  }
+  body.dark input[type=range] { background: var(--gray-600); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px;
+    border-radius: 50%; background: var(--gray-800); cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+  body.dark input[type=range]::-webkit-slider-thumb { background: var(--blue-500); }
+
+  .chevron-row {
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 18px; padding: 20px 22px;
+    border: 1px solid var(--gray-200); background: var(--white);
+    margin: 0 24px 10px; cursor: pointer; transition: background .15s;
+  }
+  body.dark .chevron-row { background: var(--gray-700); border-color: var(--gray-600); }
+  .chevron-row:hover { background: var(--gray-50); }
+  body.dark .chevron-row:hover { background: var(--gray-600); }
+  .chevron-row span { font-size: 17px; }
+
+  .delete-btn {
+    width: calc(100% - 48px); margin: 0 24px 24px;
+    padding: 18px; border-radius: 18px;
+    background: var(--white); color: var(--gray-800);
+    border: 1px solid var(--gray-200);
+    font-size: 17px; font-weight: 500; font-family: inherit; cursor: pointer;
+    transition: background .15s;
+  }
+  body.dark .delete-btn { background: var(--gray-700); border-color: var(--gray-600); color: var(--white); }
+  .delete-btn:hover { background: var(--gray-50); }
+  body.dark .delete-btn:hover { background: var(--gray-600); }
+
+  /* FORM */
+  .form-page { padding: 36px 24px; flex: 1; overflow-y: auto; }
+  .form-title { font-size: 26px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .form-sub { font-size: 15px; color: var(--gray-500); text-align: center; margin-bottom: 36px; }
+  body.dark .form-sub { color: var(--gray-400); }
+  .form-group { margin-bottom: 22px; }
+  .form-group label { display: block; font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 14px 16px;
+    border: 1px solid var(--gray-300); border-radius: 14px;
+    font-size: 15px; font-family: inherit;
+    background: var(--white); color: var(--gray-800);
+    outline: none; transition: border-color .2s;
+    -webkit-appearance: none; appearance: none;
+    resize: none;
+  }
+  body.dark .form-group input, body.dark .form-group select, body.dark .form-group textarea {
+    background: var(--gray-700); border-color: var(--gray-600); color: var(--white);
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gray-500); }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: var(--gray-400); }
+  .form-actions { margin-top: auto; padding-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-primary {
+    width: 100%; padding: 18px; border-radius: 14px;
+    background: var(--gray-800); color: var(--white);
+    font-size: 17px; font-weight: 600; font-family: inherit; border: none; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: var(--gray-700); }
+  body.dark .btn-primary { background: var(--blue-600); }
+  body.dark .btn-primary:hover { background: var(--blue-700); }
+  .btn-secondary {
+    width: 100%; padding: 18px; border-radius: 14px;
+    background: var(--white); color: var(--gray-800);
+    font-size: 17px; font-weight: 600; font-family: inherit;
+    border: 1px solid var(--gray-200); cursor: pointer; transition: background .15s;
+  }
+  body.dark .btn-secondary { background: var(--gray-700); color: var(--white); border-color: var(--gray-600); }
+  .btn-secondary:hover { background: var(--gray-50); }
+  body.dark .btn-secondary:hover { background: var(--gray-600); }
+
+  /* AVATAR */
+  .avatar-upload {
+    display: flex; flex-direction: column; align-items: center; margin-bottom: 28px;
+  }
+  .avatar-circle {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: var(--gray-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; margin-bottom: 12px;
+    overflow: hidden; position: relative;
+    border: 3px solid var(--gray-300);
+  }
+  body.dark .avatar-circle { background: var(--gray-600); border-color: var(--gray-500); }
+  .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-change-btn {
+    font-size: 14px; font-weight: 600; color: var(--blue-600);
+    background: none; border: none; cursor: pointer; font-family: inherit;
+  }
+
+  /* SETTINGS */
+  .settings-page { padding: 28px 24px; flex: 1; overflow-y: auto; }
+  .settings-title { font-size: 26px; font-weight: 700; margin-bottom: 24px; }
+  .settings-section { margin-bottom: 24px; }
+  .settings-section h2 {
+    font-size: 13px; font-weight: 600; margin-bottom: 10px;
+    color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em;
+  }
+  body.dark .settings-section h2 { color: var(--gray-400); }
+  .settings-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px;
+    background: var(--white); border: 1px solid var(--gray-200);
+    transition: background .15s;
+  }
+  body.dark .settings-item { background: var(--gray-700); border-color: var(--gray-600); }
+  .settings-item:first-child { border-radius: 18px 18px 0 0; }
+  .settings-item:last-child { border-radius: 0 0 18px 18px; }
+  .settings-item:only-child { border-radius: 18px; }
+  .settings-item + .settings-item { border-top: none; }
+  .settings-item-left { display: flex; align-items: center; gap: 14px; font-size: 16px; }
+  .settings-item-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; background: none; border: none; cursor: pointer;
+    color: inherit; font-family: inherit; padding: 0;
+  }
+  .settings-item:hover { background: var(--gray-50); }
+  body.dark .settings-item:hover { background: var(--gray-600); }
+  .logout-item { color: var(--red-600); }
+
+  /* SIDEBAR */
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; height: 100%; width: 300px;
+    background: var(--white); z-index: 50;
+    box-shadow: 8px 0 30px rgba(0,0,0,.15);
+    padding: 28px 22px;
+    display: flex; flex-direction: column;
+    animation: slideIn .25s ease;
+  }
+  body.dark .sidebar { background: var(--gray-800); color: var(--white); }
+  @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  .sidebar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .sidebar-header h2 { font-size: 20px; font-weight: 700; }
+  .sidebar-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px; border-radius: 14px;
+    font-size: 16px; cursor: pointer;
+    background: none; border: none; color: inherit; font-family: inherit;
+    width: 100%; text-align: left; transition: background .15s;
+  }
+  .sidebar-item:hover { background: var(--gray-100); }
+  body.dark .sidebar-item:hover { background: var(--gray-700); }
+  .sidebar-divider { border: none; border-top: 1px solid var(--gray-200); margin: 10px 0; }
+  body.dark .sidebar-divider { border-color: var(--gray-700); }
+  .sidebar-logout { color: var(--red-600); }
+  .sidebar-footer { text-align: center; color: var(--gray-400); font-size: 13px; padding-top: 16px; }
+  .sidebar-footer p:first-child { font-weight: 600; font-size: 15px; margin-bottom: 2px; color: var(--gray-500); }
+  body.dark .sidebar-footer p:first-child { color: var(--gray-300); }
+
+  /* ABOUT / TECHNICAL */
+  .about-page { padding: 28px 24px; flex: 1; overflow-y: auto; }
+  .about-hero { text-align: center; padding: 32px 0 28px; }
+  .about-app-icon {
+    width: 88px; height: 88px; border-radius: 22px;
+    background: var(--gray-800); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; font-size: 38px;
+  }
+  body.dark .about-app-icon { background: var(--blue-600); }
+  .about-app-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .about-app-sub { font-size: 14px; color: var(--gray-500); }
+  .about-section { margin-bottom: 22px; }
+  .about-section h3 {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--gray-500); margin-bottom: 10px;
+  }
+  body.dark .about-section h3 { color: var(--gray-400); }
+  .about-card {
+    background: var(--white); border: 1px solid var(--gray-200);
+    border-radius: 16px; padding: 16px 18px;
+    font-size: 14px; line-height: 1.7; color: var(--gray-700);
+  }
+  body.dark .about-card { background: var(--gray-700); border-color: var(--gray-600); color: var(--gray-300); }
+  .about-card code {
+    background: var(--gray-100); padding: 2px 6px; border-radius: 5px;
+    font-size: 12px; font-family: monospace; color: var(--gray-800);
+  }
+  body.dark .about-card code { background: var(--gray-600); color: var(--gray-200); }
+
+  /* TECH TABLE */
+  .tech-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tech-table th, .tech-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+  body.dark .tech-table th, body.dark .tech-table td { border-color: var(--gray-600); }
+  .tech-table th { font-weight: 600; color: var(--gray-500); font-size: 11px; text-transform: uppercase; letter-spacing:.04em; }
+  body.dark .tech-table th { color: var(--gray-400); }
+  .tech-table tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #dcfce7; color: var(--green-600); }
+  .badge-yellow { background: var(--yellow-50); color: var(--yellow-600); }
+  body.dark .badge-green { background: rgba(34,197,94,.15); color: #4ade80; }
+  body.dark .badge-yellow { background: rgba(202,138,4,.15); color: var(--yellow-400); }
+
+  /* SERIAL CONNECTION BAR */
+  .serial-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px; gap: 10px;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50); flex-shrink: 0;
+  }
+  body.dark .serial-bar { background: var(--gray-900); border-color: var(--gray-700); }
+  .serial-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: var(--gray-500);
+  }
+  body.dark .serial-status { color: var(--gray-400); }
+  .serial-dot {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    background: var(--gray-300);
+  }
+  .serial-dot.connected { background: var(--green-500); box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
+  .serial-dot.connecting { background: var(--yellow-400); animation: pulse 1s infinite; }
+  .serial-dot.error { background: var(--red-500); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .serial-connect-btn {
+    padding: 7px 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer; font-family: inherit; transition: all .15s;
+    background: var(--gray-800); color: var(--white);
+  }
+  .serial-connect-btn:hover { background: var(--gray-700); }
+  .serial-connect-btn.disconnect { background: var(--red-600); }
+  .serial-connect-btn.disconnect:hover { background: var(--red-500); }
+  body.dark .serial-connect-btn { background: var(--blue-600); }
+  body.dark .serial-connect-btn:hover { background: var(--blue-700); }
+  body.dark .serial-connect-btn.disconnect { background: var(--red-600); }
+  body.dark .serial-connect-btn.disconnect:hover { background: var(--red-500); }
+
+  /* SERIAL LOG */
+  .serial-log-wrap {
+    margin: 16px 0 0;
+    border: 1px solid var(--gray-200); border-radius: 14px;
+    overflow: hidden;
+  }
+  body.dark .serial-log-wrap { border-color: var(--gray-600); }
+  .serial-log-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: var(--gray-100);
+    font-size: 12px; font-weight: 600; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  body.dark .serial-log-header { background: var(--gray-700); color: var(--gray-400); }
+  .serial-log {
+    background: var(--gray-900); color: #a3e635;
+    font-family: monospace; font-size: 11px; line-height: 1.7;
+    padding: 10px 14px; max-height: 120px; overflow-y: auto;
+  }
+  .serial-log-line.sent { color: #60a5fa; }
+  .serial-log-line.recv { color: #a3e635; }
+  .serial-log-line.err  { color: #f87171; }
+  .serial-log-line.info { color: #d1d5db; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+    background: var(--gray-800); color: var(--white);
+    padding: 12px 22px; border-radius: 12px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+    z-index: 999; animation: toastIn .25s ease;
+  }
+  @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(12px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+  /* NOTIFICATIONS */
+  .notif-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red-500); color: var(--white);
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .notif-btn-wrap { position: relative; }
+  .notif-panel {
+    position: absolute; top: 56px; right: 16px;
+    width: 310px; background: var(--white);
+    border: 1px solid var(--gray-200); border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    z-index: 200; overflow: hidden;
+    animation: toastIn .2s ease;
+  }
+  body.dark .notif-panel { background: var(--gray-800); border-color: var(--gray-700); }
+  .notif-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--gray-200);
+  }
+  body.dark .notif-panel-header { border-color: var(--gray-700); }
+  .notif-panel-header h3 { font-size: 15px; font-weight: 700; }
+  .notif-clear-btn {
+    font-size: 12px; font-weight: 600; color: var(--blue-600);
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    padding: 4px 8px; border-radius: 8px; transition: background .15s;
+  }
+  .notif-clear-btn:hover { background: var(--gray-100); }
+  body.dark .notif-clear-btn:hover { background: var(--gray-700); }
+  .notif-list { max-height: 320px; overflow-y: auto; }
+  .notif-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 18px; border-bottom: 1px solid var(--gray-100);
+    transition: background .15s;
+  }
+  body.dark .notif-item { border-color: var(--gray-700); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+  }
+  .notif-dot.on  { background: var(--green-500); }
+  .notif-dot.off { background: var(--red-500); }
+  .notif-dot.add { background: var(--blue-500); }
+  .notif-dot.del { background: var(--gray-400); }
+  .notif-text { font-size: 13px; line-height: 1.4; flex: 1; }
+  .notif-text strong { font-weight: 600; }
+  .notif-time { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .notif-empty { padding: 28px 18px; text-align: center; color: var(--gray-400); font-size: 14px; }
+
+  svg { display: block; }
+
+  /* LOGIN */
+  .login-page {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 32px; background: var(--white);
+  }
+  .login-logo {
+    width: 80px; height: 80px; border-radius: 24px;
+    background: var(--gray-800); color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  }
+  body.dark .login-logo { background: var(--blue-600); }
+  .login-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; text-align: center; }
+  .login-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 36px; text-align: center; }
+  body.dark .login-sub { color: var(--gray-400); }
+  .login-form { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+  .login-input-wrap { position: relative; }
+  .login-input-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--gray-400); pointer-events: none;
+  }
+  .login-input {
+    width: 100%; padding: 14px 16px 14px 44px;
+    border: 1.5px solid var(--gray-200); border-radius: 14px;
+    font-size: 15px; font-family: inherit;
+    background: var(--gray-50); color: var(--gray-800);
+    outline: none; transition: border-color .2s, background .2s;
+    -webkit-appearance: none;
+  }
+  body.dark .login-input { background: var(--gray-700); border-color: var(--gray-600); color: var(--white); }
+  .login-input:focus { border-color: var(--gray-500); background: var(--white); }
+  body.dark .login-input:focus { border-color: var(--gray-400); background: var(--gray-600); }
+  .login-input::placeholder { color: var(--gray-400); }
+  .login-input.error { border-color: var(--red-500); }
+  .login-error {
+    font-size: 13px; color: var(--red-500); text-align: center;
+    padding: 10px 14px; background: rgba(201,68,68,.08);
+    border-radius: 10px; font-weight: 500;
+    animation: toastIn .2s ease;
+  }
+  .login-btn {
+    width: 100%; padding: 16px; border-radius: 14px;
+    background: var(--gray-800); color: var(--white);
+    font-size: 16px; font-weight: 600; font-family: inherit;
+    border: none; cursor: pointer; transition: background .15s, transform .1s;
+    margin-top: 4px;
+  }
+  .login-btn:hover { background: var(--gray-700); }
+  .login-btn:active { transform: scale(.98); }
+  body.dark .login-btn { background: var(--blue-600); }
+  body.dark .login-btn:hover { background: var(--blue-700); }
+  .login-footer { margin-top: 32px; font-size: 12px; color: var(--gray-400); text-align: center; }
+  @keyframes loginShake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ── ICONS ── */
+const Icon = ({ d, size = 24, stroke = 2 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round">
+    {Array.isArray(d) ? d.map((p,i) => <path key={i} d={p}/>) : <path d={d}/>}
+  </svg>
+);
+const icons = {
+  menu:     "M4 6h16M4 12h16M4 18h16",
+  bell:     "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  settings: ["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z","M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"],
+  arrowLeft:"M19 12H5M12 19l-7-7 7-7",
+  moreV:    "M12 5v.01M12 12v.01M12 19v.01",
+  plus:     "M12 5v14M5 12h14",
+  x:        "M18 6L6 18M6 6l12 12",
+  home:     ["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z","M9 22V12h6v10"],
+  info:     ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z","M12 8h.01","M12 12v4"],
+  moon:     "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+  user:     ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2","M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  shield:   "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  logout:   ["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4","M16 17l5-5-5-5","M21 12H9"],
+  chevron:  "M9 18l6-6-6-6",
+  fileText: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z","M14 2v6h6","M16 13H8","M16 17H8","M10 9H8"],
+  lightbulb:"M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26A7 7 0 0 1 12 2z",
+  door:     ["M3 21h18","M9 21V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14","M13 13v.01"],
+  zap:      "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+  camera:   ["M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z","M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  edit:     ["M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7","M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"],
+  check:    "M20 6L9 17l-5-5",
+  lock:     ["M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z","M7 11V7a5 5 0 0 1 10 0v4"],
+};
+const Ico = ({ name, size=24 }) => <Icon d={icons[name]} size={size} />;
+
+/* ── TOGGLE ── */
+const Toggle = ({ on, onChange, blue }) => (
+  <button className={`toggle${on?' on':''}${blue?' blue':''}`}
+    onClick={e => { e.stopPropagation(); onChange(!on); }} />
+);
+
+/* ── TOAST ── */
+function Toast({ msg }) {
+  return msg ? <div className="toast">{msg}</div> : null;
+}
+
+/* ── SIDEBAR ── */
+function Sidebar({ isOpen, onClose, onSettings, onAbout, onTechnical }) {
+  if (!isOpen) return null;
+  return (
+    <>
+      <div className="sidebar-overlay" onClick={onClose} />
+      <div className="sidebar">
+        <div className="sidebar-header">
+          <h2>Menu</h2>
+          <button className="icon-btn" onClick={onClose}><Ico name="x" /></button>
+        </div>
+        <nav className="sidebar-nav">
+          <button className="sidebar-item" onClick={onClose}><Ico name="home" />Dashboard</button>
+          <button className="sidebar-item" onClick={() => { onClose(); onTechnical(); }}><Ico name="fileText" />Considerações Técnicas</button>
+          <button className="sidebar-item" onClick={() => { onClose(); onAbout(); }}><Ico name="info" />Sobre o aplicativo</button>
+          <button className="sidebar-item" onClick={() => { onClose(); onSettings(); }}><Ico name="settings" />Configurações</button>
+          <hr className="sidebar-divider" />
+          <button className="sidebar-item sidebar-logout"><Ico name="logout" />Sair</button>
+        </nav>
+        <div className="sidebar-footer">
+          <p>Controle de Luz</p>
+          <p>Versão 1.0.0</p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── DASHBOARD ── */
+function Dashboard({ devices, notifications, onClearNotifs, onToggle, onIntensityChange, onDeviceClick, onAddDevice, onSettings, onAbout, onTechnical, serialStatus, serialLog, onConnect, onDisconnect }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => {
+    const now = new Date();
+    return now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const relays = devices.filter(d => d.isRelay);
+  const others = devices.filter(d => !d.isRelay);
+  const allOn  = relays.length > 0 && relays.every(d => d.value);
+  const allOff = relays.every(d => !d.value);
+  const unread = notifications.length;
+
+  return (
+    <>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}
+        onSettings={onSettings} onAbout={onAbout} onTechnical={onTechnical} />
+      <div className="header">
+        <button className="icon-btn" onClick={() => { setSidebarOpen(true); setNotifOpen(false); }}><Ico name="menu" size={28} /></button>
+        <h1>Controle de Luz</h1>
+        <div className="header-icons">
+          <div className="notif-btn-wrap">
+            {notifOpen && <div style={{position:'fixed',inset:0,zIndex:199}} onClick={() => setNotifOpen(false)} />}
+            <button className="icon-btn" onClick={() => setNotifOpen(o => !o)}><Ico name="bell" size={26} /></button>
+            {unread > 0 && <span className="notif-badge">{unread > 9 ? '9+' : unread}</span>}
+            {notifOpen && (
+              <div className="notif-panel">
+                <div className="notif-panel-header">
+                  <h3>Notificações</h3>
+                  {notifications.length > 0 && <button className="notif-clear-btn" onClick={e => { e.stopPropagation(); onClearNotifs(); }}>Limpar tudo</button>}
+                </div>
+                <div className="notif-list">
+                  {notifications.length === 0
+                    ? <div className="notif-empty">Nenhuma notificação</div>
+                    : notifications.map(n => (
+                        <div key={n.id} className="notif-item">
+                          <div className={`notif-dot ${n.type}`} />
+                          <div>
+                            <div className="notif-text">{n.text}</div>
+                            <div className="notif-time">{n.time}</div>
+                          </div>
+                        </div>
+                      ))
+                  }
+                </div>
+              </div>
+            )}
+          </div>
+          <button className="icon-btn" onClick={() => { setNotifOpen(false); onSettings(); }}><Ico name="settings" size={26} /></button>
+        </div>
+      </div>
+
+      {/* Serial Connection Bar */}
+      <div className="serial-bar">
+        <div className="serial-status">
+          <div className={`serial-dot${serialStatus==='connected'?' connected':serialStatus==='connecting'?' connecting':serialStatus==='error'?' error':''}`} />
+          {serialStatus==='connected' ? 'Arduino conectado' : serialStatus==='connecting' ? 'Conectando...' : serialStatus==='error' ? 'Erro de conexão' : 'Arduino desconectado'}
+        </div>
+        <button
+          className={`serial-connect-btn${serialStatus==='connected'?' disconnect':''}`}
+          onClick={serialStatus==='connected' ? onDisconnect : onConnect}>
+          {serialStatus==='connected' ? 'Desconectar' : 'Conectar'}
+        </button>
+      </div>
+
+      <div className="content">
+        <div className="time-bar">{currentTime}</div>
+
+        {relays.length > 0 && (
+          <>
+            <div className="section-header">
+              <h2>Lâmpadas — Sala de Aula</h2>
+            </div>
+            <div className="relay-all-btns" style={{marginBottom: 12}}>
+              <button className="relay-all-btn ligar" disabled={allOn}
+                onClick={() => relays.forEach(d => { if (!d.value) onToggle(d.id); })}>
+                ⚡ Ligar todas
+              </button>
+              <button className="relay-all-btn desligar" disabled={allOff}
+                onClick={() => relays.forEach(d => { if (d.value) onToggle(d.id); })}>
+                ✕ Desligar todas
+              </button>
+            </div>
+            <div className="relay-grid">
+              {relays.map(d => (
+                <div key={d.id} className={`relay-card${d.value?' on':''}`} onClick={() => onDeviceClick(d)}>
+                  <div className="relay-card-top">
+                    <div className="relay-card-icon"><Ico name="zap" size={22} /></div>
+                    <div>
+                      <div className="relay-name">{d.name}</div>
+                      <div className="relay-status">{d.value ? 'Ligado' : 'Desligado'}</div>
+                    </div>
+                  </div>
+                  <Toggle on={d.value} onChange={() => onToggle(d.id)} />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        <button className="add-btn" onClick={onAddDevice}>
+          <Ico name="plus" size={22} /> Adicionar dispositivo
+        </button>
+
+        {/* Log Serial — sempre visível */}
+        <div className="serial-log-wrap">
+          <div className="serial-log-header">
+            <span>Log Serial</span>
+            {serialLog.length > 0 && (
+              <button className="notif-clear-btn" onClick={() => window.__clearSerialLog && window.__clearSerialLog()}>Limpar</button>
+            )}
+          </div>
+          <div className="serial-log" id="serial-log-box" style={{minHeight:80}}>
+            {serialLog.length === 0
+              ? <div style={{color:'#6b7280',fontStyle:'italic'}}>— aguardando conexão —</div>
+              : serialLog.map(l => (
+                  <div key={l.id} className={`serial-log-line ${l.kind}`}>{l.text}</div>
+                ))
+            }
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── DEVICE CONTROL ── */
+function DeviceControl({ device, onBack, onToggle, onIntensityChange, onDelete, serialStatus }) {
+  const [intensity, setIntensity] = useState(device.intensity ?? 100);
+  const isOn = device.value === true;
+  const handleIntensity = e => {
+    const v = parseInt(e.target.value);
+    setIntensity(v);
+    onIntensityChange(device.id, v);
+  };
+  // keep local intensity in sync when changed from dashboard
+  useEffect(() => { setIntensity(device.intensity ?? 100); }, [device.intensity]);
+
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--gray-500)'}}>
+          <div className={`serial-dot${serialStatus==='connected'?' connected':''}`} style={{width:8,height:8,borderRadius:'50%',background:serialStatus==='connected'?'var(--green-500)':'var(--gray-300)'}} />
+          {serialStatus==='connected'?'Conectado':'Offline'}
+        </div>
+        <button className="icon-btn"><Ico name="moreV" size={26} /></button>
+      </div>
+      <div style={{flex:1,overflowY:'auto'}}>
+        <div className="detail-hero">
+          <div className={`detail-icon-box${isOn&&device.isRelay?' on-relay':''}`}>
+            <Ico name={device.isRelay?'zap':device.icon==='door'?'door':'lightbulb'} size={56} />
+          </div>
+          <div className="detail-title">{device.name}</div>
+          <div className="detail-sub">{device.location}</div>
+        </div>
+        <div className="card-row">
+          <div className="card-row-flex">
+            <div>
+              <div className="card-row-label">Status</div>
+              <div className={`card-row-value${isOn?' on':''}`}>{isOn?'Ligado':'Desligado'}</div>
+            </div>
+            <Toggle on={isOn} onChange={() => onToggle(device.id)} />
+          </div>
+        </div>
+        <div className="range-wrap">
+          <div className="range-header">
+            <span className="range-label">Intensidade</span>
+            <span className="range-val">{intensity}%</span>
+          </div>
+          <input type="range" min="0" max="100" value={intensity} onChange={handleIntensity} />
+        </div>
+        <div className="chevron-row" style={{cursor:'default'}}>
+          <span>Agendamentos</span>
+          <Ico name="chevron" size={22} />
+        </div>
+        <button className="delete-btn" onClick={() => onDelete(device.id)}>Excluir dispositivo</button>
+      </div>
+    </>
+  );
+}
+
+/* ── ADD DEVICE ── */
+function AddDevice({ onBack, onAdd }) {
+  const [name, setName] = useState('');
+  const [type, setType] = useState('');
+  const [location, setLocation] = useState('');
+  const submit = () => { if (name&&type&&location) { onAdd({name,type,location}); onBack(); } };
+  const arrow = `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`;
+  const sel = { backgroundImage:arrow, backgroundRepeat:'no-repeat', backgroundPosition:'right 1.25rem center', paddingRight:'3rem' };
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <span>9:41</span><div style={{width:26}} />
+      </div>
+      <div className="form-page">
+        <div className="form-title">Novo Dispositivo</div>
+        <div className="form-sub">Preencha as informações para<br />adicionar um novo dispositivo.</div>
+        <div className="form-group">
+          <label>Nome do dispositivo</label>
+          <input type="text" placeholder="Ex.: Fileira 1" value={name} onChange={e=>setName(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Tipo de dispositivo</label>
+          <select value={type} onChange={e=>setType(e.target.value)} style={sel}>
+            <option value="">Selecione o tipo</option>
+            <option value="relay">Relé (Lâmpada)</option>
+            <option value="lightbulb">Luz (PWM)</option>
+            <option value="door">Portão</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Ambiente</label>
+          <select value={location} onChange={e=>setLocation(e.target.value)} style={sel}>
+            <option value="">Selecione o ambiente</option>
+            <option value="Sala de Aula">Sala de Aula</option>
+            <option value="Sala">Sala</option>
+            <option value="Quarto">Quarto</option>
+            <option value="Cozinha">Cozinha</option>
+            <option value="Banheiro">Banheiro</option>
+            <option value="Garagem">Garagem</option>
+            <option value="Jardim">Jardim</option>
+          </select>
+        </div>
+        <div className="form-actions">
+          <button className="btn-primary" onClick={submit}>Conectar Dispositivo</button>
+          <button className="btn-secondary" onClick={onBack}>Cancelar</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── PROFILE ── */
+function Profile({ onBack, profile, onSave }) {
+  const [name, setName]     = useState(profile.name);
+  const [email, setEmail]   = useState(profile.email);
+  const [role, setRole]     = useState(profile.role);
+  const [bio, setBio]       = useState(profile.bio);
+  const [avatar, setAvatar] = useState(profile.avatar);
+  const [toast, setToast]   = useState('');
+  const fileRef = useRef();
+
+  const showToast = msg => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  const handleFile = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setAvatar(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const save = () => {
+    if (!name.trim()) { showToast('Nome não pode estar vazio.'); return; }
+    onSave({ name, email, role, bio, avatar });
+    showToast('Perfil salvo com sucesso!');
+  };
+
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <span>Perfil</span>
+        <button className="icon-btn" onClick={save}><Ico name="check" size={24} /></button>
+      </div>
+      <div className="form-page" style={{paddingTop:28}}>
+        <div className="avatar-upload">
+          <div className="avatar-circle" onClick={() => fileRef.current.click()} style={{cursor:'pointer'}}>
+            {avatar
+              ? <img src={avatar} alt="avatar" />
+              : <span style={{fontSize:38}}>👤</span>
+            }
+          </div>
+          <button className="avatar-change-btn" onClick={() => fileRef.current.click()}>
+            Alterar foto
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFile} />
+        </div>
+
+        <div className="form-group">
+          <label>Nome completo</label>
+          <input type="text" placeholder="Seu nome" value={name} onChange={e=>setName(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>E-mail</label>
+          <input type="email" placeholder="email@exemplo.com" value={email} onChange={e=>setEmail(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Função / Cargo</label>
+          <input type="text" placeholder="Ex.: Professor, Técnico..." value={role} onChange={e=>setRole(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>Bio</label>
+          <textarea rows={3} placeholder="Fale um pouco sobre você..." value={bio} onChange={e=>setBio(e.target.value)} style={{resize:'none'}} />
+        </div>
+
+        <div className="form-actions" style={{paddingTop:8}}>
+          <button className="btn-primary" onClick={save}>Salvar alterações</button>
+          <button className="btn-secondary" onClick={onBack}>Cancelar</button>
+        </div>
+      </div>
+      <Toast msg={toast} />
+    </>
+  );
+}
+
+/* ── SETTINGS ── */
+function Settings({ onBack, onAbout, onProfile, isDark, toggleDark, onLogout }) {
+  const [notif, setNotif] = useState(true);
+  const [auto, setAuto]   = useState(false);
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <span>9:41</span><div style={{width:26}} />
+      </div>
+      <div className="settings-page">
+        <div className="settings-title">Configurações</div>
+        <div className="settings-section">
+          <h2>Preferências</h2>
+          <div>
+            <div className="settings-item">
+              <div className="settings-item-left"><Ico name="bell" size={22} />Notificações</div>
+              <Toggle on={notif} onChange={setNotif} />
+            </div>
+            <div className="settings-item">
+              <div className="settings-item-left"><Ico name="settings" size={22} />Modo automático</div>
+              <Toggle on={auto} onChange={setAuto} />
+            </div>
+            <div className="settings-item">
+              <div className="settings-item-left"><Ico name="moon" size={22} />Tema escuro</div>
+              <Toggle on={isDark} onChange={toggleDark} blue />
+            </div>
+          </div>
+        </div>
+        <div className="settings-section">
+          <h2>Conta</h2>
+          <div>
+            <div className="settings-item" style={{cursor:'pointer'}}>
+              <button className="settings-item-btn" onClick={onProfile}>
+                <div className="settings-item-left"><Ico name="user" size={22} />Perfil</div>
+                <Ico name="chevron" size={20} />
+              </button>
+            </div>
+            <div className="settings-item" style={{cursor:'pointer'}}>
+              <button className="settings-item-btn">
+                <div className="settings-item-left"><Ico name="shield" size={22} />Segurança</div>
+                <Ico name="chevron" size={20} />
+              </button>
+            </div>
+            <div className="settings-item" style={{cursor:'pointer'}}>
+              <button className="settings-item-btn" onClick={onAbout}>
+                <div className="settings-item-left"><Ico name="info" size={22} />Sobre o aplicativo</div>
+                <Ico name="chevron" size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="settings-section">
+          <div>
+            <div className="settings-item logout-item" style={{cursor:'pointer',borderRadius:18}}>
+              <button className="settings-item-btn" style={{color:'var(--red-600)'}} onClick={onLogout}>
+                <div className="settings-item-left"><Ico name="logout" size={22} />Sair</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── ABOUT ── */
+function About({ onBack }) {
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <span>9:41</span><div style={{width:26}} />
+      </div>
+      <div className="about-page">
+        <div className="about-hero">
+          <div className="about-app-icon">💡</div>
+          <div className="about-app-name">Controle de Luz</div>
+          <div className="about-app-sub">Versão 1.0.0</div>
+        </div>
+        <div className="about-section">
+          <h3>Sobre</h3>
+          <div className="about-card">
+            Aplicativo para controle de iluminação de salas de aula via Arduino com módulos relé.
+            Permite ligar e desligar lâmpadas individualmente ou em grupo, com suporte a 3 fileiras
+            independentes por sala.
+          </div>
+        </div>
+        <div className="about-section">
+          <h3>Tecnologias</h3>
+          <div className="about-card">
+            Interface em React. Comunicação com Arduino via Web Serial API (Chrome/Edge).
+            Módulos relé controlados por GPIO digital do Arduino UNO.
+          </div>
+        </div>
+        <div className="about-section">
+          <h3>Desenvolvido por</h3>
+          <div className="about-card">Projeto acadêmico — Controle de Luz para Sala de Aula.</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── TECHNICAL ── */
+function Technical({ onBack }) {
+  return (
+    <>
+      <div className="back-header">
+        <button className="icon-btn" onClick={onBack}><Ico name="arrowLeft" size={26} /></button>
+        <span>9:41</span><div style={{width:26}} />
+      </div>
+      <div className="about-page">
+        <div style={{fontSize:22,fontWeight:700,marginBottom:6}}>Considerações Técnicas</div>
+        <div style={{fontSize:14,color:'var(--gray-500)',marginBottom:24}}>Hardware, sensores e comunicação</div>
+
+        {/* Módulo Relé */}
+        <div className="about-section">
+          <h3>Módulo Relé</h3>
+          <div className="about-card">
+            <p style={{marginBottom:10}}>O módulo relé é responsável por chavear a alimentação das lâmpadas de cada fileira da sala. Opera de forma binária (liga/desliga), sem suporte a dimmerização.</p>
+            <table className="tech-table">
+              <thead>
+                <tr><th>Parâmetro</th><th>Valor</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tensão de controle (bobina)</td><td>5V DC (Arduino GPIO)</td></tr>
+                <tr><td>Corrente de acionamento</td><td>≈ 15–20 mA por canal</td></tr>
+                <tr><td>Corrente máx. de carga</td><td>10A / 250VAC</td></tr>
+                <tr><td>Tensão máx. de carga</td><td>250VAC / 30VDC</td></tr>
+                <tr><td>Tipo de acionamento</td><td>Nível LOW (ativo em 0V)</td></tr>
+                <tr><td>Isolamento</td><td>Optoacoplador integrado</td></tr>
+                <tr><td>Quantidade usada</td><td>2 canais (Fileira 1 e 2)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pinagem */}
+        <div className="about-section">
+          <h3>Pinagem Arduino ↔ Relé</h3>
+          <div className="about-card">
+            <table className="tech-table">
+              <thead>
+                <tr><th>Pino Arduino</th><th>Canal</th><th>Fileira</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>D2</code></td><td>IN1</td><td>Fileira 1</td><td><span className="badge badge-green">Ativo</span></td></tr>
+                <tr><td><code>D3</code></td><td>IN2</td><td>Fileira 2</td><td><span className="badge badge-green">Ativo</span></td></tr>
+                <tr><td><code>5V / GND</code></td><td>VCC / GND</td><td>Alimentação</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Comunicação Serial */}
+        <div className="about-section">
+          <h3>Comunicação Serial (Web Serial API)</h3>
+          <div className="about-card">
+            <p style={{marginBottom:10}}>A comunicação usa a Web Serial API disponível no Chrome e Edge. Baud rate: <code>9600</code>. Comandos enviados ao Arduino:</p>
+            <table className="tech-table">
+              <thead>
+                <tr><th>Comando</th><th>Ação</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>rele1 on</code></td><td>Liga Fileira 1</td></tr>
+                <tr><td><code>rele1 off</code></td><td>Desliga Fileira 1</td></tr>
+                <tr><td><code>rele2 on/off</code></td><td>Liga/Desliga Fileira 2</td></tr>
+                <tr><td><code>brilho [0-100]</code></td><td>Intensidade</td></tr>
+              </tbody>
+            </table>
+            <p style={{marginTop:10}}>Resposta do Arduino: <code>RELE1:ON</code>, <code>RELE2:OFF</code>, etc.</p>
+          </div>
+        </div>
+
+        {/* PWM */}
+        <div className="about-section">
+          <h3>Controle PWM — Luz Geral</h3>
+          <div className="about-card">
+            <table className="tech-table">
+              <thead>
+                <tr><th>Parâmetro</th><th>Valor</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Pino PWM</td><td><code>D9</code> (Timer1)</td></tr>
+                <tr><td>Frequência</td><td>≈ 490 Hz (padrão Arduino)</td></tr>
+                <tr><td>Resolução</td><td>8 bits (0–255)</td></tr>
+                <tr><td>Mapeamento</td><td>0–100% → 0–255 via <code>map()</code></td></tr>
+                <tr><td>Carga recomendada</td><td>LED ou dimmer externo compatível</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Diagrama de ligação */}
+        <div className="about-section">
+          <h3>Diagrama de Ligação (Simplificado)</h3>
+          <div className="about-card" style={{fontFamily:'monospace',fontSize:12,lineHeight:1.8,letterSpacing:'.01em'}}>
+            <pre style={{overflowX:'auto',whiteSpace:'pre'}}>
+{`Arduino UNO
+  D2 ──► IN1 [Relé 1] ──► Fileira 1
+  D3 ──► IN2 [Relé 2] ──► Fileira 2
+  5V ──► VCC  (módulo relé)
+ GND ──► GND  (módulo relé)`}
+            </pre>
+          </div>
+        </div>
+
+        {/* Observações */}
+        <div className="about-section">
+          <h3>Observações de Segurança</h3>
+          <div className="about-card">
+            <p>⚠️ O módulo relé comuta tensão de rede (127/220VAC). A instalação elétrica deve ser realizada por profissional habilitado. Certifique-se de que o módulo utilizado suporta a corrente total das lâmpadas conectadas em cada fileira.</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── WEB SERIAL HOOK ── */
+function useSerial({ onMessage }) {
+  const [status, setStatus]   = useState('disconnected'); // disconnected | connecting | connected | error
+  const [log, setLog]         = useState([]);
+  const portRef               = useRef(null);
+  const writerRef             = useRef(null);
+  const readerRef             = useRef(null);
+  const activeRef             = useRef(false);
+
+  const addLog = (text, kind) =>
+    setLog(prev => [...prev.slice(-60), { id: Date.now() + Math.random(), text, kind }]);
+
+  const sendCmd = async (cmd) => {
+    if (!writerRef.current) return;
+    try {
+      const enc = new TextEncoder();
+      await writerRef.current.write(enc.encode(cmd + '\n'));
+      addLog('→ ' + cmd, 'sent');
+    } catch(e) { addLog('Erro ao enviar: ' + e.message, 'err'); }
+  };
+
+  const connect = async () => {
+    if (!('serial' in navigator)) {
+      addLog('Web Serial não suportado. Use Chrome/Edge.', 'err');
+      setStatus('error');
+      return;
+    }
+    try {
+      setStatus('connecting');
+      const port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 9600 });
+      portRef.current = port;
+      activeRef.current = true;
+
+      const writer = port.writable.getWriter();
+      writerRef.current = writer;
+
+      setStatus('connected');
+      addLog('Conectado ao Arduino.', 'info');
+
+      // Reader loop
+      (async () => {
+        const decoder = new TextDecoder();
+        let buf = '';
+        try {
+          while (port.readable && activeRef.current) {
+            readerRef.current = port.readable.getReader();
+            try {
+              while (true) {
+                const { value, done } = await readerRef.current.read();
+                if (done) break;
+                buf += decoder.decode(value);
+                const lines = buf.split('\n');
+                buf = lines.pop();
+                lines.forEach(line => {
+                  line = line.trim();
+                  if (!line) return;
+                  addLog('← ' + line, 'recv');
+                  onMessage(line);
+                });
+              }
+            } finally {
+              readerRef.current.releaseLock();
+            }
+          }
+        } catch(e) {
+          if (activeRef.current) {
+            addLog('Conexão encerrada: ' + e.message, 'err');
+            setStatus('error');
+          }
+        }
+      })();
+
+      // Solicita status inicial após 2s
+      setTimeout(() => sendCmd('status'), 2000);
+
+    } catch(e) {
+      addLog('Não foi possível conectar: ' + e.message, 'err');
+      setStatus('disconnected');
+    }
+  };
+
+  const disconnect = async () => {
+    activeRef.current = false;
+    try { readerRef.current && await readerRef.current.cancel(); } catch(_) {}
+    try { writerRef.current && await writerRef.current.close(); } catch(_) {}
+    try { portRef.current  && await portRef.current.close(); } catch(_) {}
+    writerRef.current = null;
+    portRef.current = null;
+    setStatus('disconnected');
+    addLog('Desconectado.', 'info');
+  };
+
+  const clearLog = () => setLog([]);
+
+  // auto-scroll log box
+  useEffect(() => {
+    const box = document.getElementById('serial-log-box');
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [log]);
+
+  // expose clear for button
+  useEffect(() => { window.__clearSerialLog = clearLog; }, []);
+
+  return { status, log, sendCmd, connect, disconnect };
+}
+
+/* ── LOGIN ── */
+function Login({ onLogin, isDark }) {
+  const [user, setUser]   = useState('');
+  const [pass, setPass]   = useState('');
+  const [error, setError] = useState('');
+  const [shake, setShake] = useState(false);
+
+  const handleSubmit = () => {
+    if (user === 'admin' && pass === 'admin') {
+      onLogin();
+    } else {
+      setError('Usuário ou senha incorretos.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  };
+
+  const handleKey = e => { if (e.key === 'Enter') handleSubmit(); };
+
+  return (
+    <div className="login-page">
+      <div className="login-logo">
+        <Ico name="zap" size={36} />
+      </div>
+      <div className="login-title">Controle de Luz</div>
+      <div className="login-sub">Faça login para continuar</div>
+
+      <div className="login-form" style={shake ? { animation: 'loginShake .4s ease' } : {}}>
+        <div className="login-input-wrap">
+          <span className="login-input-icon"><Ico name="user" size={18} /></span>
+          <input
+            className={`login-input${error ? ' error' : ''}`}
+            placeholder="Usuário"
+            value={user}
+            onChange={e => { setUser(e.target.value); setError(''); }}
+            onKeyDown={handleKey}
+            autoCapitalize="none"
+            autoCorrect="off"
+          />
+        </div>
+        <div className="login-input-wrap">
+          <span className="login-input-icon"><Ico name="lock" size={18} /></span>
+          <input
+            className={`login-input${error ? ' error' : ''}`}
+            type="password"
+            placeholder="Senha"
+            value={pass}
+            onChange={e => { setPass(e.target.value); setError(''); }}
+            onKeyDown={handleKey}
+          />
+        </div>
+        {error && <div className="login-error">{error}</div>}
+        <button className="login-btn" onClick={handleSubmit}>Entrar</button>
+      </div>
+
+      <div className="login-footer">Controle de Iluminação · Sala de Aula</div>
+    </div>
+  );
+}
+
+/* ── APP ── */
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [page, setPage] = useState('dashboard');
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [profile, setProfile] = useState({
+    name: 'Professor(a)', email: 'prof@escola.edu.br',
+    role: 'Professor', bio: '', avatar: '',
+  });
+
+  const [devices, setDevices] = useState([
+    { id: 2, name: 'Lâmpadas 1', location: 'Sala de Aula', icon: 'relay', type: 'toggle', value: false, intensity: 100, isRelay: true },
+    { id: 3, name: 'Lâmpadas 2', location: 'Sala de Aula', icon: 'relay', type: 'toggle', value: false, intensity: 100, isRelay: true },
+  ]);
+
+  // Map device id → relay number (id 2→1, 3→2, 4→3)
+  const relayNum = id => id - 1;
+
+  // Parse incoming Arduino messages
+  const handleMessage = useRef(null);
+  handleMessage.current = (line) => {
+    if (line === 'PRONTO') return;
+    if (line.startsWith('RELE')) {
+      const m = line.match(/^RELE(\d):(\w+)$/);
+      if (m) {
+        const n = parseInt(m[1]), state = m[2] === 'ON';
+        const devId = n + 1;
+        setDevices(prev => prev.map(d => d.id === devId ? { ...d, value: state } : d));
+      }
+    } else if (line.startsWith('BRILHO')) {
+      const m = line.match(/^BRILHO(\d):(\d+)$/);
+      if (m) {
+        const n = parseInt(m[1]), pct = parseInt(m[2]);
+        const devId = n + 1;
+        setDevices(prev => prev.map(d => d.id === devId ? { ...d, intensity: pct } : d));
+      }
+    }
+  };
+
+  const { status, log, sendCmd, connect, disconnect } = useSerial({
+    onMessage: (line) => handleMessage.current(line),
+  });
+
+  useEffect(() => { document.body.className = isDark ? 'dark' : ''; }, [isDark]);
+
+  const addNotif = (text, type) => {
+    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    setNotifications(prev => [{ id: Date.now(), text, type, time }, ...prev]);
+  };
+
+  const toggleDevice = (id) => {
+    const dev = devices.find(d => d.id === id);
+    if (!dev) return;
+    const newVal = !dev.value;
+    const n = relayNum(id);
+    sendCmd(`rele${n} ${newVal ? 'on' : 'off'}`);
+    addNotif(<><strong>{dev.name}</strong> foi {newVal ? 'ligado(a)' : 'desligado(a)'}</>, newVal ? 'on' : 'off');
+    setDevices(prev => prev.map(d => d.id === id ? { ...d, value: newVal } : d));
+  };
+
+  const handleIntensity = (id, intensity) => {
+    const n = relayNum(id);
+    sendCmd(`brilho${n} ${intensity}`);
+    setDevices(prev => prev.map(d => d.id === id ? { ...d, intensity } : d));
+  };
+
+  const handleDelete = id => {
+    const dev = devices.find(d => d.id === id);
+    if (dev) {
+      sendCmd(`rele${relayNum(id)} off`);
+      addNotif(<><strong>{dev.name}</strong> foi removido(a)</>, 'del');
+    }
+    setDevices(prev => prev.filter(d => d.id !== id));
+    setPage('dashboard');
+    setSelectedDevice(null);
+  };
+
+  const handleAdd = ({ name, type, location }) => {
+    const newD = {
+      id: Math.max(...devices.map(d => d.id)) + 1,
+      name, location, icon: type,
+      type: 'toggle', value: false, intensity: 100,
+      isRelay: type === 'relay',
+    };
+    setDevices(prev => [...prev, newD]);
+    addNotif(<><strong>{name}</strong> foi adicionado(a) em {location}</>, 'add');
+  };
+
+  const currentDevice = selectedDevice
+    ? devices.find(d => d.id === selectedDevice.id) ?? selectedDevice
+    : null;
+
+  const renderPage = () => {
+    if (page === 'device' && currentDevice)
+      return <DeviceControl device={currentDevice} onBack={() => setPage('dashboard')}
+        onToggle={toggleDevice} onIntensityChange={handleIntensity} onDelete={handleDelete}
+        serialStatus={status} />;
+    if (page === 'add')
+      return <AddDevice onBack={() => setPage('dashboard')} onAdd={handleAdd} />;
+    if (page === 'settings')
+      return <Settings onBack={() => setPage('dashboard')} onAbout={() => setPage('about')}
+        onProfile={() => setPage('profile')} isDark={isDark} toggleDark={() => setIsDark(p => !p)}
+        onLogout={() => setIsLoggedIn(false)} />;
+    if (page === 'profile')
+      return <Profile onBack={() => setPage('settings')} profile={profile} onSave={p => setProfile(p)} />;
+    if (page === 'about')
+      return <About onBack={() => setPage('dashboard')} />;
+    if (page === 'technical')
+      return <Technical onBack={() => setPage('dashboard')} />;
+
+    return <Dashboard
+      devices={devices}
+      notifications={notifications}
+      onClearNotifs={() => setNotifications([])}
+      onToggle={toggleDevice}
+      onIntensityChange={handleIntensity}
+      onDeviceClick={d => { setSelectedDevice(d); setPage('device'); }}
+      onAddDevice={() => setPage('add')}
+      onSettings={() => setPage('settings')}
+      onAbout={() => setPage('about')}
+      onTechnical={() => setPage('technical')}
+      serialStatus={status}
+      serialLog={log}
+      onConnect={connect}
+      onDisconnect={disconnect}
+    />;
+  };
+
+  return (
+    <div className="phone">
+      {!isLoggedIn
+        ? <Login onLogin={() => setIsLoggedIn(true)} isDark={isDark} />
+        : renderPage()
+      }
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
