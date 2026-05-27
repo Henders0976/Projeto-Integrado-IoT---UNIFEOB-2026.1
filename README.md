@@ -1,6 +1,12 @@
 # 💡 Controle de Luz — Arduino + Interface Web
 
--- DESENVOLVIDO PELOS ESTUDANTES: 
+Aviso:
+
+- **UTILIZAMOS O FIGMA APENAS PARA REALIZAR O DESIGN DAS TELAS, TODAS AS FUNÇÕES DO FRONT-END FORAM FEITAS EM Html / Css / React / Web Serial API.**
+
+- **No figma, não tem funções das telas integradas.**
+
+--> DESENVOLVIDO PELOS ESTUDANTES: 
 
 Henderson Lério Grossi - RA: 26000986
 
@@ -9,6 +15,7 @@ Pietro Emanuel da Silva Batista - RA: 26000307
 Kauê Valério Baesso - RA: 26001167
 
 Washington Luiz da Silva - RA: 26001289
+---------------------------------------------
 
 Sistema de controle de iluminação para sala de aula desenvolvido com Arduino UNO e interface web em React. Permite ligar e desligar lâmpadas remotamente pelo computador ou celular via cabo USB, sem necessidade de internet.
 
@@ -147,10 +154,11 @@ README.md                 # Este arquivo
 ## ⚠️ Observações
 
 - **O PROJETO SIMULA O USO REAL, NÃO FOI FEITO NESSE SEMESTRE PARA FUNCIONAR NO CAMPUS.**
-- **UTILIZAMOS O FIGMA APENAS PARA REALIZAR O DESIGN DAS TELAS, TODAS AS FUNÇÕES DO FRONT-END FORAM FEITAS EM Html / Css / React / Web Serial API.**
-- **No figma, não tem funções das telas integradas.**
+
 - O módulo relé é **ativo em LOW** — nível BAIXO (0V) liga o relé, nível ALTO (5V) desliga.
+
 - Para uso com lâmpadas da **rede elétrica (127/220V)**, a instalação deve ser feita por um eletricista.
+  
 - Para testes seguros, utilize lâmpadas **12V** alimentadas por fonte DC.
 
 ---
