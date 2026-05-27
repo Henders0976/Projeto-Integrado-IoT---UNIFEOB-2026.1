@@ -29,7 +29,7 @@ O sistema utiliza um Arduino UNO para controlar um módulo relé de 2 canais, pe
 | Arduino UNO | 1 |
 | Módulo Relé 2 Canais 5V | 1 |
 | Cabo USB tipo B | 1 |
-| Fios Jumper macho-macho | 4 |
+| Fios Jumper macho-fêmea | 4 |
 | Fonte 12V (mínimo 1A) | 1 |
 | Bocal E27 com fios | 1 ou 2 |
 | Lâmpada LED 12V E27 | 1 ou 2 |
@@ -147,9 +147,11 @@ README.md                 # Este arquivo
 ## ⚠️ Observações
 
 - **O PROJETO SIMULA O USO REAL, NÃO FOI FEITO NESSE SEMESTRE PARA FUNCIONAR NO CAMPUS.**
-- O módulo relé é **ativo em LOW** — nível BAIXO (0V) liga o relé, nível ALTO (5V) desliga
-- Para uso com lâmpadas da **rede elétrica (127/220V)**, a instalação deve ser feita por um eletricista
-- Para testes seguros, utilize lâmpadas **12V** alimentadas por fonte DC
+- **UTILIZAMOS O FIGMA APENAS PARA REALIZAR O DESIGN DAS TELAS, TODAS AS FUNÇÕES DO FRONT-END FORAM FEITAS EM Html / Css / React / Web Serial API.**
+- **No figma, não tem funções das telas integradas.**
+- O módulo relé é **ativo em LOW** — nível BAIXO (0V) liga o relé, nível ALTO (5V) desliga.
+- Para uso com lâmpadas da **rede elétrica (127/220V)**, a instalação deve ser feita por um eletricista.
+- Para testes seguros, utilize lâmpadas **12V** alimentadas por fonte DC.
 
 ---
 
